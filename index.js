@@ -22,6 +22,7 @@ async function run() {
   try {
     await client.connect();
     const classCollection = client.db("summerCamp").collection("classes");
+    const usersCollection = client.db("summerCamp").collection("users");
 
 
     app.get('/classes', async(req, res) =>{
@@ -118,6 +119,25 @@ async function run() {
           res.status(500).json({ error: 'Internal server error' });
         }
       })
+     
+
+      app.get('/users',  async (req, res) => {
+        const result = await usersCollection.find().toArray();
+        res.send(result);
+      });
+
+      app.post('/users', async (req, res) => {
+        const user = req.body;
+        const query = { email: user.email }
+        const existingUser = await usersCollection.findOne(query);
+      
+        if (existingUser) {
+          return res.send({ message: 'user already exists' })
+        }
+      
+        const result = await usersCollection.insertOne(user);
+        res.send(result);
+      });
 
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
