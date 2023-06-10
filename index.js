@@ -58,6 +58,24 @@ async function run() {
       }
     });
 
+
+    app.post('/classes', async (req, res) => {
+      try {
+        const classData = req.body;
+    
+        // Add additional logic to set the status field to "pending"
+        classData.status = 'pending';
+    
+        const result = await classCollection.insertOne(classData);
+        res.send(result);
+      } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+      }
+    });
+
+
+
     app.get('/classes/:email', async (req, res) => {
       try {
         const email = req.params.email;
@@ -138,17 +156,12 @@ async function run() {
       }
     });
 
-    app.get('/users', async (req, res) => {
-      try {
-        const result = await usersCollection.find().toArray();
-        res.send(result);
-      } catch (error) {
-        console.error('Error:', error);
-        res.status(500).json({ error: 'Internal server error' });
-      }
+    app.get('/users',verifyJWT,  async (req, res) => {
+      const result = await usersCollection.find().toArray();
+      res.send(result);
     });
 
-    app.post('/users', verifyJWT, async (req, res) => {
+    app.post('/users', async (req, res) => {
       try {
         const user = req.body;
         const query = { email: user.email };
@@ -211,6 +224,89 @@ async function run() {
         res.status(500).json({ error: 'Internal server error' });
       }
     });
+
+
+
+
+    app.patch('/classes/:classId', async (req, res) => {
+      const { classId } = req.params;
+      const { status, feedback } = req.body;
+    
+      try {
+        const classItem = await Class.findById(classId);
+        if (!classItem) {
+          return res.status(404).json({ error: 'Class not found' });
+        }
+    
+        if (status) {
+          classItem.status = status;
+        }
+        if (feedback) {
+          classItem.feedback = feedback;
+        }
+    
+        await classItem.save();
+    
+        res.json(classItem);
+      } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+      }
+    });
+
+    const verifyInstructor = async (req, res, next) => {
+      const email = req.decoded.email;
+      const query = { email: email };
+      const user = await usersCollection.findOne(query);
+      if (user?.role !== 'instructor') {
+        return res.status(403).send({ error: true, message: 'Forbidden message' });
+      }
+      next();
+    };
+
+
+    app.get('/users/instructor/:email', verifyJWT,verifyInstructor, async (req, res) => {
+      try {
+        const email = req.params.email;
+
+        if (req.decoded.email !== email) {
+          return res.send({ instructor: false });
+        }
+
+        const query = { email: email };
+        const user = await usersCollection.findOne(query);
+        const result = { instructor: user?.role === 'instructor' };
+        res.send(result);
+      } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+      }
+    });
+   
+
+
+    app.patch('/users/instructor/:id', async (req, res) => {
+      try {
+        const id = req.params.id;
+        const filter = { _id: new ObjectId(id) };
+        const updateDoc = {
+          $set: {
+            role: 'instructor',
+          },
+        };
+
+        const result = await usersCollection.updateOne(filter, updateDoc);
+        res.send(result);
+      } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+      }
+    });
+
+
+
+
+
 
     await client.db('admin').command({ ping: 1 });
     console.log('Pinged your deployment. You successfully connected to MongoDB!');
