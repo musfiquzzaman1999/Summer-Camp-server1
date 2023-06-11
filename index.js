@@ -65,9 +65,40 @@ async function run() {
     
         // Add additional logic to set the status field to "pending"
         classData.status = 'pending';
+        classData.totalStudents = 0;
+        classData.feedback = '';
     
         const result = await classCollection.insertOne(classData);
         res.send(result);
+      } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+      }
+    });
+
+    app.get('/instructor/classes/:instructorEmail', async (req, res) => {
+      try {
+        const { instructorEmail } = req.params;
+        const instructorClasses = await classCollection.find({ instructorEmail }).toArray();
+        res.json(instructorClasses);
+      } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+      }
+    });
+    
+    app.patch('/classes/:classId', async (req, res) => {
+      try {
+        const { classId } = req.params;
+        const { status, feedback } = req.body;
+      
+        const updatedClass = await classCollection.findOneAndUpdate(
+          { _id: new ObjectId(classId) },
+          { $set: { status, feedback } },
+          { returnOriginal: false }
+        );
+      
+        res.json(updatedClass.value);
       } catch (error) {
         console.error('Error:', error);
         res.status(500).json({ error: 'Internal server error' });
@@ -283,6 +314,29 @@ async function run() {
       }
     });
    
+
+
+    app.put('/classes/:id', async (req, res) => {
+      try {
+        const { id } = req.params;
+        const { name, description, students, thumbnail } = req.body;
+    
+        const updatedClass = await classCollection.findOneAndUpdate(
+          { _id: new ObjectId(id) },
+          { $set: { name, description, students, thumbnail } },
+          { returnOriginal: false }
+        );
+    
+        if (!updatedClass.value) {
+          return res.status(404).json({ error: 'Class not found' });
+        }
+    
+        res.json(updatedClass.value);
+      } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+      }
+    });
 
 
     app.patch('/users/instructor/:id', async (req, res) => {
