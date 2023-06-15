@@ -162,7 +162,7 @@ dbConnect()
       res.send(result);
     });
 
-    ////////////////////////////////////////////////////
+    
     // class related api
     app.get("/classes", async (req, res) => {
       const result = await classCollection.find().toArray();
@@ -256,8 +256,6 @@ dbConnect()
       res.send(result);
     });
 
-    ///////////////////////////////////
-
     // instructor related api
     app.get("/instructor", async (req, res) => {
       const result = await instructorCollection.find().toArray();
@@ -269,20 +267,6 @@ dbConnect()
       const result = await instructorCollection.insertOne(cursor);
       res.send(result);
     });
-
-    // app.delete("/instructor/:id", async (req, res) => {
-    //   const id = req.params.id;
-    //   const query = { _id: new ObjectId(id) };
-    //   const result = await instructorCollection.deleteOne(query);
-    //   res.send(result);
-    // });
-
-    //////////////////////////////////////////////
-
-
-
-
-
     // create payment intent
     app.post("/create-payment-intent", verifyJWT, async (req, res) => {
       const { price } = req.body;
@@ -297,8 +281,6 @@ dbConnect()
         clientSecret: paymentIntent.client_secret,
       });
     });
-
-
     // payment related api
     app.post('/payments',  async (req, res) => {
       const payment = req.body;
@@ -317,9 +299,6 @@ dbConnect()
       const result = await paymentCollection.find(query).sort({date: -1}).toArray();
       res.send(result)
     })
-
-
-
     // enrolled
     app.get('/enrolled/:email', async (req, res)=>{
       const email = req.params.email;
@@ -327,12 +306,6 @@ dbConnect()
       const result = await paymentCollection.find(query).toArray();
       res.send(result)
     })
-
-
-    
-
-    /////////////////////////
-
     // selected class
     app.post('/selectedClassData', async (req, res) => {
       const user = req.body;
@@ -357,15 +330,7 @@ dbConnect()
       const query = { _id: new ObjectId(id) };
       const result = await selectedCollection.findOne(query);
       res.send(result);
-    });
-
-
-    //////////////////////////
-
-
-
-
-
+    })
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
